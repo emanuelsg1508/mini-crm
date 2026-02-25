@@ -47,7 +47,12 @@ html = """
 <li>{{ nombre }} - {{ total }}</li>
 {% endfor %}
 </ul>
-
+<h2>Comisiones (10%)</h2>
+<ul>
+{% for nombre, valor in comisiones.items() %}
+<li>{{ nombre }} - {{ valor }}</li>
+{% endfor %}
+</ul>
 <hr>
 
 <h2>Historial de Ventas</h2>
@@ -94,15 +99,19 @@ def home():
         ranking_dict[v[3]] = ranking_dict.get(v[3], 0) + v[2]
 
     ranking = sorted(ranking_dict.items(), key=lambda x: x[1], reverse=True)
+    comisiones = {}
+for nombre, total_vendido in ranking:
+    comisiones[nombre] = round(total_vendido * 0.10, 2)
 
     conn.close()
 
-    return render_template_string(
-        html,
-        ventas=ventas,
-        total=total,
-        ranking=ranking
-    )
+return render_template_string(
+    html,
+    ventas=ventas,
+    total=total,
+    ranking=ranking,
+    comisiones=comisiones
+)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
