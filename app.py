@@ -8,6 +8,8 @@ app.secret_key = "clave_secreta_super_segura"
 META_MENSUAL = 5000
 COMISION = 0.05  # 5%
 
+VENDEDORES = ["Jeronimo", "Emanuel", "Julian"]
+
 def init_db():
     conn = sqlite3.connect("crm.db")
     c = conn.cursor()
@@ -30,8 +32,8 @@ login_html = """
 <head>
 <style>
 body {
-    background: linear-gradient(135deg, #1f2937, #111827);
-    color: white;
+    background: black;
+    color: gold;
     font-family: Arial;
     display: flex;
     justify-content: center;
@@ -39,11 +41,11 @@ body {
     height: 100vh;
 }
 .login-box {
-    background: #1f2937;
+    background: #111;
     padding: 40px;
     border-radius: 10px;
     width: 300px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    text-align: center;
 }
 input {
     width: 100%;
@@ -53,16 +55,17 @@ input {
 button {
     width: 100%;
     padding: 10px;
-    background: #10b981;
+    background: gold;
     border: none;
-    color: white;
+    color: black;
+    font-weight: bold;
     cursor: pointer;
 }
 </style>
 </head>
 <body>
 <div class="login-box">
-<h2>Mini CRM PRO</h2>
+<h2>Imperium G</h2>
 <form method="POST">
 <input name="username" placeholder="Usuario" required>
 <input name="password" type="password" placeholder="Contraseña" required>
@@ -80,7 +83,8 @@ dashboard_html = """
 <style>
 body {
     font-family: Arial;
-    background-color: #f3f4f6;
+    background-color: black;
+    color: gold;
     margin: 0;
     padding: 30px;
 }
@@ -90,37 +94,42 @@ body {
     margin: auto;
 }
 
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.logo {
+    text-align: center;
+}
+
+.logo img {
+    width: 180px;
 }
 
 .card {
-    background: white;
+    background: #111;
     padding: 20px;
     border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
     margin-top: 20px;
 }
 
 button {
-    background: #3b82f6;
-    color: white;
+    background: gold;
+    color: black;
     padding: 10px;
     border: none;
     cursor: pointer;
     border-radius: 5px;
+    font-weight: bold;
 }
 
 input, select {
     width: 100%;
     padding: 8px;
     margin-top: 5px;
+    background: #222;
+    color: gold;
+    border: 1px solid gold;
 }
 
 .progress-bar {
-    background: #e5e7eb;
+    background: #333;
     border-radius: 10px;
     overflow: hidden;
     margin-top: 10px;
@@ -128,10 +137,11 @@ input, select {
 
 .progress-fill {
     height: 20px;
-    background: #10b981;
+    background: gold;
     width: {{ progreso }}%;
     text-align: center;
-    color: white;
+    color: black;
+    font-weight: bold;
 }
 </style>
 </head>
@@ -139,13 +149,14 @@ input, select {
 
 <div class="container">
 
-<div class="header">
-<h1>Mini CRM PRO</h1>
-<a href="/logout">Cerrar sesión</a>
+<div class="logo">
+<img src="/static/logo.png" alt="Imperium G Logo">
+<h1>Imperium G - CRM</h1>
 </div>
 
 <div class="card">
 <h2>🏆 Top Vendedor: {{ top_vendedor }}</h2>
+<a href="/logout" style="color: gold;">Cerrar sesión</a>
 </div>
 
 <div class="card">
@@ -168,9 +179,9 @@ input, select {
 
 <label>Empleado</label>
 <select name="empleado">
-<option>Carlos</option>
-<option>Maria</option>
-<option>Andres</option>
+{% for vendedor in vendedores %}
+<option>{{ vendedor }}</option>
+{% endfor %}
 </select>
 
 <br><br>
@@ -260,7 +271,8 @@ def home():
         top_vendedor=top_vendedor,
         meta=META_MENSUAL,
         falta=falta,
-        progreso=progreso
+        progreso=progreso,
+        vendedores=VENDEDORES
     )
 
 if __name__ == "__main__":
