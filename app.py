@@ -25,77 +25,187 @@ def init_db():
 init_db()
 
 login_html = """
-<h2>Login Mini CRM PRO</h2>
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body {
+    background: linear-gradient(135deg, #1f2937, #111827);
+    color: white;
+    font-family: Arial;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+.login-box {
+    background: #1f2937;
+    padding: 40px;
+    border-radius: 10px;
+    width: 300px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+input {
+    width: 100%;
+    padding: 8px;
+    margin: 10px 0;
+}
+button {
+    width: 100%;
+    padding: 10px;
+    background: #10b981;
+    border: none;
+    color: white;
+    cursor: pointer;
+}
+</style>
+</head>
+<body>
+<div class="login-box">
+<h2>Mini CRM PRO</h2>
 <form method="POST">
-Usuario:
-<input name="username" required><br><br>
-Contraseña:
-<input name="password" type="password" required><br><br>
+<input name="username" placeholder="Usuario" required>
+<input name="password" type="password" placeholder="Contraseña" required>
 <button type="submit">Ingresar</button>
 </form>
+</div>
+</body>
+</html>
 """
 
 dashboard_html = """
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body {
+    font-family: Arial;
+    background-color: #f3f4f6;
+    margin: 0;
+    padding: 30px;
+}
+
+.container {
+    max-width: 1000px;
+    margin: auto;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    margin-top: 20px;
+}
+
+button {
+    background: #3b82f6;
+    color: white;
+    padding: 10px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+input, select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+}
+
+.progress-bar {
+    background: #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.progress-fill {
+    height: 20px;
+    background: #10b981;
+    width: {{ progreso }}%;
+    text-align: center;
+    color: white;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<div class="header">
 <h1>Mini CRM PRO</h1>
-<h2>🏆 Top Vendedor: {{ top_vendedor }}</h2>
 <a href="/logout">Cerrar sesión</a>
+</div>
 
-<hr>
+<div class="card">
+<h2>🏆 Top Vendedor: {{ top_vendedor }}</h2>
+</div>
 
-<h3>📊 Meta Mensual: {{ meta }}</h3>
-<p>Total Vendido: {{ total }}</p>
-<p>Falta para la meta: {{ falta }}</p>
-<p>Progreso: {{ progreso }}%</p>
+<div class="card">
+<h3>Meta Mensual: ${{ meta }}</h3>
+<p>Total Vendido: ${{ total }}</p>
+<p>Falta: ${{ falta }}</p>
+<div class="progress-bar">
+<div class="progress-fill">{{ progreso }}%</div>
+</div>
+</div>
 
-<hr>
-
-<h2>Registrar Venta</h2>
+<div class="card">
+<h3>Registrar Venta</h3>
 <form method="POST">
-Cliente:
-<input name="cliente" required><br><br>
+<label>Cliente</label>
+<input name="cliente" required>
 
-Monto:
-<input name="monto" type="number" step="0.01" required><br><br>
+<label>Monto</label>
+<input name="monto" type="number" step="0.01" required>
 
-Empleado:
+<label>Empleado</label>
 <select name="empleado">
 <option>Carlos</option>
 <option>Maria</option>
 <option>Andres</option>
-</select><br><br>
+</select>
 
+<br><br>
 <button type="submit">Registrar Venta</button>
 </form>
+</div>
 
-<hr>
-
+<div class="card">
 <h3>Ranking</h3>
 <ul>
 {% for nombre, total in ranking %}
-<li>{{ nombre }} - {{ total }}</li>
+<li>{{ nombre }} - ${{ total }}</li>
 {% endfor %}
 </ul>
 
 <h3>Comisiones (5%)</h3>
 <ul>
 {% for nombre, valor in comisiones.items() %}
-<li>{{ nombre }} - {{ valor }}</li>
+<li>{{ nombre }} - ${{ valor }}</li>
 {% endfor %}
 </ul>
+</div>
+
+</div>
+</body>
+</html>
 """
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
-
-        if username == "admin" and password == "1234":
+        if request.form["username"] == "admin" and request.form["password"] == "1234":
             session["logged_in"] = True
             return redirect("/")
-        else:
-            return "Credenciales incorrectas"
-
+        return "Credenciales incorrectas"
     return login_html
 
 @app.route("/logout")
@@ -134,10 +244,7 @@ def home():
 
     ranking = sorted(ranking_dict.items(), key=lambda x: x[1], reverse=True)
 
-    comisiones = {}
-    for nombre, total_vendido in ranking:
-        comisiones[nombre] = round(total_vendido * COMISION, 2)
-
+    comisiones = {nombre: round(total * COMISION, 2) for nombre, total in ranking}
     top_vendedor = ranking[0][0] if ranking else "Nadie aún"
 
     falta = max(META_MENSUAL - total, 0)
