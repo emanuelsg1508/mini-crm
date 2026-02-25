@@ -6,7 +6,7 @@ app = Flask(__name__)
 app.secret_key = "clave_secreta_super_segura"
 
 META_MENSUAL = 5000
-COMISION = 0.05  # 5%
+COMISION = 0.05
 
 VENDEDORES = ["Jeronimo", "Emanuel", "Julian"]
 
@@ -99,7 +99,8 @@ body {
 }
 
 .logo img {
-    width: 180px;
+    width: 200px;
+    margin-bottom: 10px;
 }
 
 .card {
@@ -107,6 +108,7 @@ body {
     padding: 20px;
     border-radius: 10px;
     margin-top: 20px;
+    border: 1px solid gold;
 }
 
 button {
@@ -150,7 +152,7 @@ input, select {
 <div class="container">
 
 <div class="logo">
-<img src="/static/logo.png" alt="Imperium G Logo">
+<img src="/static/logo.jpeg" alt="Imperium G Logo">
 <h1>Imperium G - CRM</h1>
 </div>
 
