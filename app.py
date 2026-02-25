@@ -1,8 +1,9 @@
-from flask import Flask, render_template_string, request, redirect
+from flask import Flask, render_template_string, request, redirect, session
 import sqlite3
 import os
 
 app = Flask(__name__)
+app.secret_key = "clave_secreta_super_segura"
 
 def init_db():
     conn = sqlite3.connect("crm.db")
@@ -20,60 +21,88 @@ def init_db():
 
 init_db()
 
-html = """
+# ---- LOGIN TEMPLATE ----
+login_html = """
+<h2>Login Mini CRM PRO</h2>
+<form method="POST">
+Usuario:
+<input name="username" required><br><br>
+Contraseña:
+<input name="password" type="password" required><br><br>
+<button type="submit">Ingresar</button>
+</form>
+"""
+
+# ---- DASHBOARD TEMPLATE ----
+dashboard_html = """
 <h1>Mini CRM PRO</h1>
+<h2>🏆 Top Vendedor: {{ top_vendedor }}</h2>
+
+<a href="/logout">Cerrar sesión</a>
+
+<hr>
 
 <h2>Registrar Venta</h2>
 <form method="POST">
-    Cliente: <input name="cliente" required><br>
-    Monto: <input name="monto" type="number" step="0.01" required><br>
+    Cliente:
+    <input name="cliente" required><br><br>
+
+    Monto:
+    <input name="monto" type="number" step="0.01" required><br><br>
+
     Empleado:
     <select name="empleado">
         <option>Carlos</option>
         <option>Maria</option>
         <option>Andres</option>
-    </select><br>
-    <button type="submit">Registrar</button>
+    </select><br><br>
+
+    <button type="submit">Registrar Venta</button>
 </form>
 
 <hr>
 
-<h2>Resumen</h2>
-<p><strong>Total Ventas:</strong> {{ total }}</p>
+<h2>Total Vendido: {{ total }}</h2>
 
-<h2>Ranking Empleados</h2>
+<h3>Ranking</h3>
 <ul>
 {% for nombre, total in ranking %}
 <li>{{ nombre }} - {{ total }}</li>
 {% endfor %}
 </ul>
-<h2>Comisiones (10%)</h2>
+
+<h3>Comisiones (10%)</h3>
 <ul>
 {% for nombre, valor in comisiones.items() %}
 <li>{{ nombre }} - {{ valor }}</li>
 {% endfor %}
 </ul>
-<hr>
-
-<h2>Historial de Ventas</h2>
-<table border="1">
-<tr>
-<th>Cliente</th>
-<th>Monto</th>
-<th>Empleado</th>
-</tr>
-{% for v in ventas %}
-<tr>
-<td>{{ v[1] }}</td>
-<td>{{ v[2] }}</td>
-<td>{{ v[3] }}</td>
-</tr>
-{% endfor %}
-</table>
 """
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+
+        if username == "admin" and password == "1234":
+            session["logged_in"] = True
+            return redirect("/")
+        else:
+            return "Credenciales incorrectas"
+
+    return login_html
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/login")
 
 @app.route("/", methods=["GET", "POST"])
 def home():
+    if not session.get("logged_in"):
+        return redirect("/login")
+
     conn = sqlite3.connect("crm.db")
     c = conn.cursor()
 
@@ -99,19 +128,22 @@ def home():
         ranking_dict[v[3]] = ranking_dict.get(v[3], 0) + v[2]
 
     ranking = sorted(ranking_dict.items(), key=lambda x: x[1], reverse=True)
+
     comisiones = {}
-for nombre, total_vendido in ranking:
-    comisiones[nombre] = round(total_vendido * 0.10, 2)
+    for nombre, total_vendido in ranking:
+        comisiones[nombre] = round(total_vendido * 0.10, 2)
+
+    top_vendedor = ranking[0][0] if ranking else "Nadie aún"
 
     conn.close()
 
-return render_template_string(
-    html,
-    ventas=ventas,
-    total=total,
-    ranking=ranking,
-    comisiones=comisiones
-)
+    return render_template_string(
+        dashboard_html,
+        total=total,
+        ranking=ranking,
+        comisiones=comisiones,
+        top_vendedor=top_vendedor
+    )
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
