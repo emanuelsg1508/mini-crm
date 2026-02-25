@@ -5,6 +5,9 @@ import os
 app = Flask(__name__)
 app.secret_key = "clave_secreta_super_segura"
 
+META_MENSUAL = 5000
+COMISION = 0.05  # 5%
+
 def init_db():
     conn = sqlite3.connect("crm.db")
     c = conn.cursor()
@@ -21,7 +24,6 @@ def init_db():
 
 init_db()
 
-# ---- LOGIN TEMPLATE ----
 login_html = """
 <h2>Login Mini CRM PRO</h2>
 <form method="POST">
@@ -33,36 +35,39 @@ Contraseña:
 </form>
 """
 
-# ---- DASHBOARD TEMPLATE ----
 dashboard_html = """
 <h1>Mini CRM PRO</h1>
 <h2>🏆 Top Vendedor: {{ top_vendedor }}</h2>
-
 <a href="/logout">Cerrar sesión</a>
+
+<hr>
+
+<h3>📊 Meta Mensual: {{ meta }}</h3>
+<p>Total Vendido: {{ total }}</p>
+<p>Falta para la meta: {{ falta }}</p>
+<p>Progreso: {{ progreso }}%</p>
 
 <hr>
 
 <h2>Registrar Venta</h2>
 <form method="POST">
-    Cliente:
-    <input name="cliente" required><br><br>
+Cliente:
+<input name="cliente" required><br><br>
 
-    Monto:
-    <input name="monto" type="number" step="0.01" required><br><br>
+Monto:
+<input name="monto" type="number" step="0.01" required><br><br>
 
-    Empleado:
-    <select name="empleado">
-        <option>Carlos</option>
-        <option>Maria</option>
-        <option>Andres</option>
-    </select><br><br>
+Empleado:
+<select name="empleado">
+<option>Carlos</option>
+<option>Maria</option>
+<option>Andres</option>
+</select><br><br>
 
-    <button type="submit">Registrar Venta</button>
+<button type="submit">Registrar Venta</button>
 </form>
 
 <hr>
-
-<h2>Total Vendido: {{ total }}</h2>
 
 <h3>Ranking</h3>
 <ul>
@@ -71,7 +76,7 @@ dashboard_html = """
 {% endfor %}
 </ul>
 
-<h3>Comisiones (10%)</h3>
+<h3>Comisiones (5%)</h3>
 <ul>
 {% for nombre, valor in comisiones.items() %}
 <li>{{ nombre }} - {{ valor }}</li>
@@ -131,9 +136,12 @@ def home():
 
     comisiones = {}
     for nombre, total_vendido in ranking:
-        comisiones[nombre] = round(total_vendido * 0.10, 2)
+        comisiones[nombre] = round(total_vendido * COMISION, 2)
 
     top_vendedor = ranking[0][0] if ranking else "Nadie aún"
+
+    falta = max(META_MENSUAL - total, 0)
+    progreso = round((total / META_MENSUAL) * 100, 2) if META_MENSUAL > 0 else 0
 
     conn.close()
 
@@ -142,7 +150,10 @@ def home():
         total=total,
         ranking=ranking,
         comisiones=comisiones,
-        top_vendedor=top_vendedor
+        top_vendedor=top_vendedor,
+        meta=META_MENSUAL,
+        falta=falta,
+        progreso=progreso
     )
 
 if __name__ == "__main__":
